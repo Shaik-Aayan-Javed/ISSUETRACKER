@@ -46,6 +46,7 @@ dns.setServers(['1.1.1.1', '8.8.8.8']); // Force public DNS to fix SRV lookup
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const issueRoutes = require('./routes/issueRoutes');
@@ -58,7 +59,16 @@ app.use(express.json());
 app.use('/api/issues', issueRoutes);
 app.use('/api/team', teamRoutes);
 
-app.get('/', (req, res) => res.json({ message: 'Issue Tracker API running' }));
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = path.join(__dirname, '../frontend/dist');
+  app.use(express.static(frontendPath));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => res.json({ message: 'Issue Tracker API running' }));
+}
 
 // 3. Connect to MongoDB
 mongoose
